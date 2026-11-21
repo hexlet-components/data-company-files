@@ -1,7 +1,8 @@
 SET = company-files
 
 test:
-	@test "$$(find $(SET) -type f | wc -l)" = 40 || { echo "в наборе не 40 файлов"; exit 1; }
+	@test "$$(find $(SET) -type f | wc -l)" -eq 40 || { echo "в наборе не 40 файлов"; exit 1; }
+	@find $(SET) -type f | LC_ALL=C awk '{ name = tolower($$0); if (name in paths) { print "совпали имена без учёта латинского регистра: " paths[name] " / " $$0; failed = 1 } else paths[name] = $$0 } END { exit failed }'
 	@find $(SET) -type f | while read -r f; do \
 		case "$$(file -b --mime-encoding "$$f")" in utf-8|us-ascii|binary) ;; \
 		*) echo "не UTF-8: $$f"; exit 1;; esac; done
@@ -10,7 +11,7 @@ test:
 	@grep -q 'не указан' $(SET)/kontakty-crm.csv || { echo "пропал битый телефон"; exit 1; }
 	@grep -q 'Пустой Контакт' $(SET)/kontakty-vebinar.csv || { echo "пропала запись без телефона и почты"; exit 1; }
 	@cmp -s $(SET)/scheta-01-2025.csv "$(SET)/Копия scheta-01-2025.csv" || { echo "пропал побайтовый дубликат"; exit 1; }
-	@for f in .DS_Store Thumbs.db rekvizity pustaya-vygruzka.csv "scheta-01-2025 (1).csv" SCHETA-02-2025.CSV "Архив/kontakty-rassylka.csv"; do \
+	@for f in .DS_Store Thumbs.db rekvizity pustaya-vygruzka.csv "scheta-01-2025 (1).csv" "Копия SCHETA-02-2025.CSV" "Архив/kontakty-rassylka.csv"; do \
 		test -e "$(SET)/$$f" || { echo "пропал $$f"; exit 1; }; done
 	@test ! -s $(SET)/pustaya-vygruzka.csv || { echo "пустой файл перестал быть пустым"; exit 1; }
 	@echo "набор цел: 40 файлов, ловушки на месте"
